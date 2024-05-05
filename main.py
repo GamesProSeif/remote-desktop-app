@@ -1,7 +1,7 @@
 import sys
 from structures import App
-
-
+from structures import InputHandling
+from structures import MouseKeyboardHandler
 def take_file_input():
     flag = True
     while flag:
@@ -20,17 +20,6 @@ def fileHandler(data):
     print(f"file data {data}")
 
 
-def take_mouse_input():
-    flag = True
-    while flag:
-        try:
-            # input delay to simulate listening for mouse actions
-            input("Press Enter to send mouse example")
-            app.send("MOUSE", 50, 60)
-        except EOFError:
-            flag = False
-
-
 def mouseHandler(mouseX, mouseY):
     print(f"mouseX: {mouseX}\tmouseY: {mouseY}")
 
@@ -42,9 +31,13 @@ if __name__ == "__main__":
     app = App()
     app.setMode(app_mode)
     app.debug = True  # Show connection log to terminal
-
-    # app.addListener(take_mouse_input)
-    # app.addHandler("MOUSE", mouseHandler)
+    inputhandling = InputHandling(app)
+    mouseKeyboardHandler = MouseKeyboardHandler()
+    if app.mode == "client":
+        app.addListener(inputhandling.start)
+    else:    
+        app.addHandler("MOUSE", mouseKeyboardHandler.mouse)
+        app.addHandler("KEYBOARD", mouseKeyboardHandler.keyboard)
 
     app.addListener(take_file_input)
     app.addHandler("FILE", fileHandler)
