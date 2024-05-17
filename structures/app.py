@@ -1,5 +1,5 @@
 from pickle import dumps
-from twisted.internet import reactor
+from twisted.internet import reactor, tksupport
 from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint
 from structures.protocol import TCPFactory
 
@@ -34,6 +34,9 @@ class App:
         for listener in self._listeners:
             reactor.callInThread(listener)
 
+    def startGUI(self, gui):
+        tksupport.install(gui.root)
+
     def send(self, event, *args):
         msg = dumps({"event": event, "args": args})
         self.protocol.transport.write(msg)
@@ -50,3 +53,6 @@ class App:
 
         self.listen()
         reactor.run()
+
+    def stop(self):
+        reactor.stop()
