@@ -73,8 +73,7 @@ class GUI:
 		self.chat_button = tk.Button(self.tools_frame, text="Chat")
 		self.chat_button.pack(side='left', padx=10)
 
-		self.image_path = "city.jpg"
-		self.original_image = Image.open(self.image_path)
+		self.original_image = Image.open("city.jpg")
 
 		self.screen_area = tk.Label(self.connected_client_page)
 		self.screen_area.pack(fill='both', expand=True)

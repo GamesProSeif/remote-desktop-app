@@ -1,30 +1,45 @@
 import socket
 from twisted.internet.protocol import Protocol, connectionDone, Factory
 from pickle import loads
+from io import BytesIO
 
 
 class TCPProtocol(Protocol):
     def __init__(self, app):
         self.app = app
         self.app.protocol = self
+        self.buffer = BytesIO()
 
     def connectionMade(self):
         if self.app.debug:
             print("DEBUG: NEW_CONNECTION")
 
     def dataReceived(self, data: bytes):
+        self.buffer.write(data)
+
         try:
             # if data.decode() == self.app.pass_code:
             if self.app.auth_handler.check_pass_code(data.decode()):
                 return self.transport.write("ok".encode())
-        except UnicodeDecodeError:
-            msg = loads(data)
-            event = msg["event"]
-            args = msg["args"]
-            self.app.useHandler(event, *args)
+            else:
+                raise Exception()
+        except Exception:
+            delimiter_index = self.buffer.getvalue().find(b"##FRAMEDATA##")
+            print("rec:" ,len(self.buffer.getvalue()), delimiter_index)
+            if delimiter_index != -1:
+                msg = loads(self.buffer.getvalue()[:delimiter_index])
+                event = msg["event"]
+                args = msg["args"]
+                self.app.useHandler(event, *args)
 
-            if self.app.debug:
-                print(f"DEBUG: RECEIVED - {msg}")
+                if self.app.debug:
+                    if len(self.buffer.getvalue()) < 1000:
+                        print(f"DEBUG: RECEIVED - {msg}")
+                    else:
+                        print("DEBUG: RECEIVED - too long to show")
+
+                self.buffer.seek(0)
+                self.buffer.truncate()
 
     def connectionLost(self, reason=connectionDone):
         if self.app.debug:

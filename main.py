@@ -10,6 +10,7 @@ if __name__ == "__main__":
     # app.setMode(app_mode)
     app.debug = True  # Show connection log to terminal
     gui = GUI(app)
+    app.gui = gui
 
     try:
         gui.start()

@@ -5,8 +5,10 @@ from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint
 from structures.protocol import TCPFactory
 from structures.input_handling import InputHandling
 from structures.handling_recieve import MouseKeyboardHandler
+from structures.share_screen_handler import ScreenShareHandler
 from .auth_handler import AuthHandler
 from socket import gethostname, gethostbyname_ex
+from io import BytesIO
 
 
 class App:
@@ -22,6 +24,7 @@ class App:
         self.pass_code = None
         self.authenticated = False
         self.auth_handler = AuthHandler(self)
+        self.screen_share_handler = ScreenShareHandler(self)
 
     def setMode(self, mode):
         if mode == "server" or mode == "client":
@@ -46,15 +49,20 @@ class App:
         tksupport.install(gui.server_root if self.mode == "server" else gui.client_root)
 
     def send(self, event, *args):
+        buffer = BytesIO()
         msg = dumps({"event": event, "args": args})
+        buffer.write(msg)
+        buffer.seek(0)
+        msg = buffer.read() + b"##FRAMEDATA##"
         self.protocol.transport.write(msg)
 
     def start(self):
         self.running = True
         if self.mode == "server":
-            mouseKeyboardHandler = MouseKeyboardHandler()
-            self.addHandler("MOUSE", mouseKeyboardHandler.mouse)
-            self.addHandler("KEYBOARD", mouseKeyboardHandler.keyboard)
+            mouse_keyboard_handler = MouseKeyboardHandler()
+            self.addHandler("MOUSE", mouse_keyboard_handler.mouse)
+            self.addHandler("KEYBOARD", mouse_keyboard_handler.keyboard)
+            self.addListener(self.screen_share_handler.capture_and_send)
 
             endpoint = TCP4ServerEndpoint(reactor, self.port)
             endpoint.listen(TCPFactory(self))
@@ -63,6 +71,7 @@ class App:
         elif self.mode == "client":
             inputhandling = InputHandling(self)
             self.addListener(inputhandling.start)
+            self.addHandler("SCREEN", self.screen_share_handler.receive)
 
             endpoint = TCP4ClientEndpoint(reactor, self.host, self.port)
             endpoint.connect(TCPFactory(self))
