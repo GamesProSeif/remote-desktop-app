@@ -1,5 +1,4 @@
 import tkinter as tk
-from tkinter import ttk
 from PIL import Image, ImageTk
 from pyperclip import copy as copy_to_clipboard
 from .protocol import is_server_listening
