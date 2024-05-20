@@ -21,6 +21,7 @@ class App:
         self.running = False
         self.pass_code = None
         self.authenticated = False
+        self.auth_handler = AuthHandler(self)
 
     def setMode(self, mode):
         if mode == "server" or mode == "client":
@@ -52,8 +53,6 @@ class App:
         self.running = True
         if self.mode == "server":
             mouseKeyboardHandler = MouseKeyboardHandler()
-            authHandler = AuthHandler()
-            self.addHandler("AUTH", authHandler.attempt_connection)
             self.addHandler("MOUSE", mouseKeyboardHandler.mouse)
             self.addHandler("KEYBOARD", mouseKeyboardHandler.keyboard)
 

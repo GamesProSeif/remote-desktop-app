@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 from pyperclip import copy as copy_to_clipboard
+from .protocol import is_server_listening
 
 
 class GUI:
@@ -30,7 +31,7 @@ class GUI:
 		self.link_entry = tk.Entry(self.client_frame)
 		self.link_entry.pack(pady=20, padx=100, fill='x', expand=True)
 
-		self.connect_button = tk.Button(self.client_frame, text="Connect", command=self.connect_to_server)
+		self.connect_button = tk.Button(self.client_frame, text="Connect", command=self.is_server_alive)
 		self.connect_button.pack(pady=20)
 
 
@@ -125,9 +126,26 @@ class GUI:
 
 	def copy_link(self):
 		copy_to_clipboard(self.app.get_link())
-		old_text = self.copy_link_button.config()["text"][4]
-		self.copy_link_button.config(text="Copied to Clipboard")
-		self.server_root.after(1500, lambda: self.copy_link_button.config(text=old_text))
+		self.change_button_text_temp(self.server_root, self.copy_link_button, "Copied to Clipboard")
+
+	def is_server_alive(self):
+		link = self.link_entry.get()
+
+		# validate link
+		valid = self.app.auth_handler.validate_link(link)
+
+		if valid:
+			[ip, pass_code] = link.split("?p=")
+			if self.app.debug:
+				print(f"DEBUG: Attempting to connect to {link}")
+			is_alive = is_server_listening(ip, self.app.port, pass_code)
+			if is_alive:
+				self.app.host = ip
+				self.connect_to_server()
+			else:
+				self.change_button_text_temp(self.root, self.connect_button, "Server not Active")
+		else:
+			self.change_button_text_temp(self.root, self.connect_button, "Invalid Link")
 
 	def connect_to_server(self):
 		self.app.setMode("client")
@@ -141,3 +159,8 @@ class GUI:
 
 	def on_window_close(self):
 		self.app.stop()
+
+	def change_button_text_temp(self, root, button, new_text):
+		old_text = button.config()["text"][4]
+		button.config(text=new_text)
+		root.after(1500, lambda: button.config(text=old_text))
