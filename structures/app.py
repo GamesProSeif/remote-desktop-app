@@ -1,5 +1,6 @@
 from pickle import dumps
 from random import choice
+from time import sleep
 from twisted.internet import reactor, tksupport
 from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint
 from structures.protocol import TCPFactory
@@ -16,10 +17,12 @@ class App:
         self.debug = False
         self.mode = None
         self.protocol = None
+        self.screen_share_protocol = None
         self._handlers = {}
         self._listeners = []
         self.host = self.get_host()
         self.port = 5005
+        self.screen_share_port = 5006
         self.running = False
         self.pass_code = None
         self.authenticated = False
@@ -54,7 +57,11 @@ class App:
         buffer.write(msg)
         buffer.seek(0)
         msg = buffer.read() + b"##FRAMEDATA##"
-        self.protocol.transport.write(msg)
+        if event == "SCREEN" and self.screen_share_protocol:
+            self.screen_share_protocol.transport.write(msg)
+            sleep(0.1)
+        else:
+            self.protocol.transport.write(msg)
 
     def start(self):
         self.running = True
@@ -66,6 +73,8 @@ class App:
 
             endpoint = TCP4ServerEndpoint(reactor, self.port)
             endpoint.listen(TCPFactory(self))
+            screen_share_endpoint = TCP4ServerEndpoint(reactor, self.screen_share_port)
+            screen_share_endpoint.listen(TCPFactory(self, True))
             if self.debug:
                 print("DEBUG: Started TCP Server")
         elif self.mode == "client":
@@ -75,6 +84,8 @@ class App:
 
             endpoint = TCP4ClientEndpoint(reactor, self.host, self.port)
             endpoint.connect(TCPFactory(self))
+            screen_share_endpoint = TCP4ClientEndpoint(reactor, self.host, self.screen_share_port)
+            screen_share_endpoint.connect(TCPFactory(self, True))
             if self.debug:
                 print("DEBUG: Started TCP Client")
         else:
