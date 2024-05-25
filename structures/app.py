@@ -20,6 +20,7 @@ class App:
         self.screen_share_protocol = None
         self._handlers = {}
         self._listeners = []
+        self._delisteners = []
         self.host = self.get_host()
         self.port = 5005
         self.screen_share_port = 5006
@@ -43,6 +44,9 @@ class App:
 
     def addListener(self, listener):
         self._listeners.append(listener)
+
+    def addDelistener(self, delistener):
+        self._delisteners.append(delistener)
 
     def listen(self):
         for listener in self._listeners:
@@ -80,6 +84,7 @@ class App:
         elif self.mode == "client":
             inputhandling = InputHandling(self)
             self.addListener(inputhandling.start)
+            self.addDelistener(inputhandling.stopListening)
             self.addHandler("SCREEN", self.screen_share_handler.receive)
 
             endpoint = TCP4ClientEndpoint(reactor, self.host, self.port)
@@ -96,6 +101,11 @@ class App:
 
     def stop(self):
         if self.running:
+            for delistener in self._delisteners:
+                delistener()
+            reactor.getThreadPool().stop()
+            self.protocol.transport.loseConnection()
+            self.screen_share_protocol.transport.loseConnection()
             reactor.stop()
             self.running = False
         exit()

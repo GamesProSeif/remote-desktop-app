@@ -47,11 +47,14 @@ class InputHandling:
 
         # Register listeners outside the start function
         mouse_listener = MouseListener(on_move=get_coords, on_click=on_click, on_scroll=on_scroll)
+        self.mouse_listener = mouse_listener
         mouse_listener.start()
 
         keyboard.on_press(on_key_event)  # Register keyboard listener
 
         keyboard.wait('esc')  # Wait for ESC key press
+        self.stopListening()
 
-        mouse_listener.stop()
+    def stopListening(self):
+        self.mouse_listener.stop()
         keyboard.unhook_all()  # Unregister listeners

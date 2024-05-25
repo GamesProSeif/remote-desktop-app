@@ -120,7 +120,8 @@ class GUI:
 		self.screen_dimensions = [xmin, ymin, xmax, ymax]
 
 	def disconnect(self):
-		self.root.destroy()
+		self.client_root.destroy()
+		self.on_window_close()
 
 	def show_server_page(self):
 		self.app.setMode("server")
