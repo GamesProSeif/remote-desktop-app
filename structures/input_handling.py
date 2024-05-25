@@ -8,9 +8,13 @@ class InputHandling:
 
     def start(self):
         def get_coords(x, y):
-            if self.app.debug:
-                print("DEBUG: Mouse ", x, y)
-            self.app.send("MOUSE", "MOVE", x, y)
+            [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
+            if x > xmin and x < xmax and y > ymin and y < ymax:
+                if self.app.debug:
+                    print("DEBUG: Mouse ", x, y)
+                relativeX = (x - xmin) / (xmax - xmin)
+                relativeY = (y - ymin) / (ymax - ymin)
+                self.app.send("MOUSE", "MOVE", relativeX, relativeY)
 
         def on_key_event(event):
             if self.app.debug:
@@ -18,24 +22,28 @@ class InputHandling:
             self.app.send("KEYBOARD", event.name)
 
         def on_click(x, y, button, pressed):
-            if pressed:
-                if button == Button.left:
-                    button_name = 'Left'
-                elif button == Button.right:
-                    button_name = 'Right'
-                elif button == Button.middle:
-                    button_name = 'Middle'
-                else:
-                    button_name = 'Unknown'
+            [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
+            if x > xmin and x < xmax and y > ymin and y < ymax:
+                if pressed:
+                    if button == Button.left:
+                        button_name = 'Left'
+                    elif button == Button.right:
+                        button_name = 'Right'
+                    elif button == Button.middle:
+                        button_name = 'Middle'
+                    else:
+                        button_name = 'Unknown'
 
-                if self.app.debug:
-                    print("DEBUG: Mouse Click", button_name)
-                self.app.send("MOUSE", "CLICK", button_name)
+                    if self.app.debug:
+                        print("DEBUG: Mouse Click", button_name)
+                    self.app.send("MOUSE", "CLICK", button_name)
 
         def on_scroll(x, y, dx, dy):
-            if self.app.debug:
-                print(f"DEBUG: Mouse scrolled at: ({dx}, {dy})")
-            self.app.send("MOUSE", "SCROLL", dy)
+            [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
+            if x > xmin and x < xmax and y > ymin and y < ymax:
+                if self.app.debug:
+                    print(f"DEBUG: Mouse scrolled at: ({dx}, {dy})")
+                self.app.send("MOUSE", "SCROLL", dy)
 
         # Register listeners outside the start function
         mouse_listener = MouseListener(on_move=get_coords, on_click=on_click, on_scroll=on_scroll)

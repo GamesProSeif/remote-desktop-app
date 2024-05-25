@@ -1,5 +1,9 @@
 import pyautogui
+from screeninfo import get_monitors
 
+[screenWidth, screenHeight] = [
+    [screen.width, screen.height] for screen in get_monitors() if screen.is_primary
+][0]
 
 class MouseKeyboardHandler:
     @staticmethod
@@ -16,7 +20,9 @@ class MouseKeyboardHandler:
                 pyautogui.scroll(-200)
         elif event_type == "MOVE":
             x, y = args[:2]
-            pyautogui.moveTo(x, y, duration=0.5)
+            physicalX = x * screenWidth
+            physicalY = y * screenHeight
+            pyautogui.moveTo(physicalX, physicalY, duration=0.1)
 
     @staticmethod
     def keyboard(string):

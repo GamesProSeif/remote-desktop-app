@@ -15,6 +15,7 @@ pyperclip==1.8.2
 PyRect==0.2.0
 PyScreeze==0.1.30
 pytweening==1.2.0
+screeninfo==0.8.1
 six==1.16.0
 tk==0.1.0
 Twisted==24.3.0

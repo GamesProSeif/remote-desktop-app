@@ -7,6 +7,7 @@ from .protocol import is_server_listening
 class GUI:
 	def __init__(self, app):
 		self.app = app
+		self.screen_dimensions = [0, 0, 0, 0]
 
 		self.geometry = "800x600"
 
@@ -96,6 +97,27 @@ class GUI:
 		# Update the label image
 		self.screen_area.config(image=photo_image)
 		self.screen_area.image = photo_image  # Keep a reference!
+		self.set_screen_dimensions(new_height)
+
+	def set_screen_dimensions(self, img_height):
+		geometry_string = self.screen_area.winfo_geometry()
+		offset_list = geometry_string.split("+")
+		if len(offset_list) != 3:
+			return None
+
+		rootx = self.client_root.winfo_rootx()
+		rooty = self.client_root.winfo_rooty()
+
+		[width, height] = [int(num) for num in offset_list[0].split("x")]
+		xmin = int(offset_list[1]) + rootx
+		ymin = int(offset_list[2]) + rooty
+		xmax = xmin + width
+		ymax = ymin + height
+
+		ymin += (height - img_height) / 2
+		ymax -= (height - img_height) / 2
+		
+		self.screen_dimensions = [xmin, ymin, xmax, ymax]
 
 	def disconnect(self):
 		self.root.destroy()
