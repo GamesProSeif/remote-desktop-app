@@ -143,10 +143,6 @@ class GUI:
 		self.main_frame.pack_forget()
 		self.client_frame.pack(fill='both', expand=True)
 
-	def show_client_page(self):
-		self.main_frame.pack_forget()
-		self.client_frame.pack(fill='both', expand=True)
-
 	def copy_link(self):
 		copy_to_clipboard(self.app.get_link())
 		self.change_button_text_temp(self.server_root, self.copy_link_button, "Copied to Clipboard")
