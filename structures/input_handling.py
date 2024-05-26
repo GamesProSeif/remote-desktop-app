@@ -22,6 +22,8 @@ class InputHandling:
                 self.last_mouse_move_time = time()
 
         def on_key_event(event):
+            if not self.app.gui.focused:
+                return
             if self.app.debug:
                 print("DEBUG: Keyboard", event.name)
             self.app.send("KEYBOARD", event.name)
