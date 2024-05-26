@@ -1,13 +1,14 @@
 from pickle import dumps
 from random import choice
 from time import sleep
-from twisted.internet import reactor, tksupport
+from twisted.internet import reactor, tksupport, defer
 from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint
 from structures.protocol import TCPFactory
 from structures.input_handling import InputHandling
 from structures.handling_recieve import MouseKeyboardHandler
 from structures.share_screen_handler import ScreenShareHandler
 from .auth_handler import AuthHandler
+from .file_handler import FileHandler
 from socket import gethostname, gethostbyname_ex
 from io import BytesIO
 
@@ -29,6 +30,7 @@ class App:
         self.authenticated = False
         self.auth_handler = AuthHandler(self)
         self.screen_share_handler = ScreenShareHandler(self)
+        self.file_handler = FileHandler(self)
 
     def setMode(self, mode):
         if mode == "server" or mode == "client":
@@ -41,6 +43,9 @@ class App:
 
     def useHandler(self, event_name, *args):
         self._handlers[event_name](*args)
+
+    def getHandlerNames(self):
+        return self._handlers.keys()
 
     def addListener(self, listener):
         self._listeners.append(listener)
@@ -56,16 +61,26 @@ class App:
         tksupport.install(gui.server_root if self.mode == "server" else gui.client_root)
 
     def send(self, event, *args):
-        buffer = BytesIO()
-        msg = dumps({"event": event, "args": args})
-        buffer.write(msg)
-        buffer.seek(0)
-        msg = buffer.read() + b"##FRAMEDATA##"
-        if event == "SCREEN" and self.screen_share_protocol:
-            self.screen_share_protocol.transport.write(msg)
-            sleep(0.1)
-        else:
+        MAX_MSG_SIZE = 1024  # Assuming MAX_MSG_SIZE is defined elsewhere
+
+        data = dumps({"event": event, "args": args})
+        if len(data) <= MAX_MSG_SIZE:
+            # Message fits within limit, send directly
+            prefix = f"##HEAD{event:<10}{0:<4}{1:<4}##"
+            msg = prefix.encode() + data + b"##FRAMEEND##"
             self.protocol.transport.write(msg)
+        else:
+            # Message exceeds limit, fragment and send
+            num_chunks = (len(data) // MAX_MSG_SIZE) + 1  # Calculate number of chunks
+            for chunk_num in range(num_chunks):
+                start = chunk_num * MAX_MSG_SIZE
+                end = min(start + MAX_MSG_SIZE, len(data))
+                chunk = data[start:end]
+
+                # Prefix with event name and chunk number for reassembly
+                prefix = f"##HEAD{event:<10}{chunk_num:<4}{num_chunks:<4}##"
+                msg = prefix.encode() + chunk + b"##FRAMEEND##"
+                self.protocol.transport.write(msg)
 
     def start(self):
         self.running = True
@@ -73,6 +88,7 @@ class App:
             mouse_keyboard_handler = MouseKeyboardHandler()
             self.addHandler("MOUSE", mouse_keyboard_handler.mouse)
             self.addHandler("KEYBOARD", mouse_keyboard_handler.keyboard)
+            self.addHandler("FILE", self.file_handler.receive_file)
             self.addListener(self.screen_share_handler.capture_and_send)
 
             endpoint = TCP4ServerEndpoint(reactor, self.port)

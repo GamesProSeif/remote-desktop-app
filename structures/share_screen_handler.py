@@ -8,12 +8,13 @@ class ScreenShareHandler:
 	def __init__(self, app):
 		self.app = app
 		self.screen = pyscreeze
+		self.active = True
 		self.frame_rate = 15  # frames per second
 
 	def capture_and_send(self):
 		delay = 1 / self.frame_rate
 		while self.app.running:
-			if self.app.authenticated:
+			if self.app.authenticated and self.active:
 				frame = self.screen.screenshot()
 				frame_rgb = frame.convert("RGB")
 				buffer = BytesIO()

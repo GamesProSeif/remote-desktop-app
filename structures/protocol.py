@@ -12,23 +12,31 @@ class TCPProtocol(Protocol):
             self.app.screen_share_protocol = self
         else:
             self.app.protocol = self
-        self.buffer = BytesIO()
+        self.buffer = {}
+        self.buffer["MAIN"] = BytesIO()
+        for key in self.app.getHandlerNames():
+            self.buffer[key] = BytesIO()
 
     def connectionMade(self):
         if self.app.debug:
             print("DEBUG: NEW_CONNECTION -", "SCREEN" if self.is_screen_share else "MAIN")
 
     def dataReceived(self, data: bytes):
+        print("HEAD:", data[:40])
         try:
             # if data.decode() == self.app.pass_code:
-            if self.app.auth_handler.check_pass_code(data.decode()):
+            if data.decode() == "stop_screen_share":
+                self.app.screen_share_handler.active = False
+            elif self.app.auth_handler.check_pass_code(data.decode()):
                 return self.transport.write("ok".encode())
             else:
                 raise Exception()
         except Exception:
             try:
                 self.buffer.write(data)
-                delimiter_index = self.buffer.getvalue().find(b"##FRAMEDATA##")
+                if self.buffer.getvalue().find(b"stop_share_screen") != -1:
+                    print("FOUND_HERE", self.buffer.getvalue().find(b"stop_share_screen"))
+                delimiter_index = self.buffer.getvalue().find(b"##FRAMEEND##")
                 print("rec:" ,len(self.buffer.getvalue()), delimiter_index)
                 if delimiter_index != -1:
                     msg = loads(self.buffer.getvalue()[:delimiter_index])
@@ -38,16 +46,16 @@ class TCPProtocol(Protocol):
 
                     if self.app.debug:
                         if len(self.buffer.getvalue()) < 1000:
-                            print(f"DEBUG: RECEIVED - {msg}")
+                            print(f"DEBUG: RECEIVED {event} - {msg}")
                         else:
-                            print("DEBUG: RECEIVED - too long to show")
+                            print(f"DEBUG: RECEIVED {event} - too long to show")
 
-                    self.buffer.seek(0)
-                    self.buffer.truncate()
+                    self.buffer = BytesIO(self.buffer.getvalue()[delimiter_index + len(b"##FRAMEEND##"):])
             except Exception as exception:
                 if self.is_screen_share:
-                    self.buffer.seek(0)
-                    self.buffer.truncate()
+                    self.buffer = BytesIO(self.buffer.getvalue()[delimiter_index + len(b"##FRAMEEND##"):])
+                    # self.buffer.seek(0)
+                    # self.buffer.truncate()
                 else:
                     raise exception
 
