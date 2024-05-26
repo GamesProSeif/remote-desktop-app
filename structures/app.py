@@ -38,6 +38,12 @@ class App:
         else:
             raise Exception(f"Invalid mode: {mode}")
 
+    def handlerManagerReceive(self, message):
+        if message == "file_dialog_open":
+            self.screen_share_handler.active = False
+        elif message == "file_dialog_close":
+            self.screen_share_handler.active = True
+
     def addHandler(self, event_name, fn):
         self._handlers[event_name] = fn
 
@@ -86,6 +92,7 @@ class App:
         self.running = True
         if self.mode == "server":
             mouse_keyboard_handler = MouseKeyboardHandler()
+            self.addHandler("HANDLER", self.handlerManagerReceive)
             self.addHandler("MOUSE", mouse_keyboard_handler.mouse)
             self.addHandler("KEYBOARD", mouse_keyboard_handler.keyboard)
             self.addHandler("FILE", self.file_handler.receive_file)
@@ -119,9 +126,9 @@ class App:
         if self.running:
             for delistener in self._delisteners:
                 delistener()
-            reactor.getThreadPool().stop()
-            self.protocol.transport.loseConnection()
-            self.screen_share_protocol.transport.loseConnection()
+            # reactor.getThreadPool().stop()
+            # self.protocol.transport.loseConnection()
+            # self.screen_share_protocol.transport.loseConnection()
             reactor.stop()
             self.running = False
         exit()
