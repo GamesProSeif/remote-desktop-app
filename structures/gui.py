@@ -8,6 +8,7 @@ class GUI:
 	def __init__(self, app):
 		self.app = app
 		self.screen_dimensions = [0, 0, 0, 0]
+		self.focused = False
 
 		self.geometry = "800x600"
 
@@ -98,6 +99,7 @@ class GUI:
 		self.screen_area.config(image=photo_image)
 		self.screen_area.image = photo_image  # Keep a reference!
 		self.set_screen_dimensions(new_height)
+		self.focused = self.client_root == self.client_root.focus_get()
 
 	def set_screen_dimensions(self, img_height):
 		geometry_string = self.screen_area.winfo_geometry()

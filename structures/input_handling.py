@@ -1,20 +1,25 @@
 from pynput.mouse import Listener as MouseListener, Button
+from time import time
 import keyboard
 
 
 class InputHandling:
     def __init__(self, app):
         self.app = app
+        self.last_mouse_move_time = time()
 
     def start(self):
         def get_coords(x, y):
+            if time() - self.last_mouse_move_time < 0.5:
+                return
             [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
-            if x > xmin and x < xmax and y > ymin and y < ymax:
+            if self.app.gui.focused and x > xmin and x < xmax and y > ymin and y < ymax:
                 if self.app.debug:
                     print("DEBUG: Mouse ", x, y)
                 relativeX = (x - xmin) / (xmax - xmin)
                 relativeY = (y - ymin) / (ymax - ymin)
                 self.app.send("MOUSE", "MOVE", relativeX, relativeY)
+                self.last_mouse_move_time = time()
 
         def on_key_event(event):
             if self.app.debug:
@@ -23,7 +28,7 @@ class InputHandling:
 
         def on_click(x, y, button, pressed):
             [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
-            if x > xmin and x < xmax and y > ymin and y < ymax:
+            if self.app.gui.focused and x > xmin and x < xmax and y > ymin and y < ymax:
                 if pressed:
                     if button == Button.left:
                         button_name = 'Left'
@@ -41,7 +46,7 @@ class InputHandling:
 
         def on_scroll(x, y, dx, dy):
             [xmin, ymin, xmax, ymax] = self.app.gui.screen_dimensions
-            if x > xmin and x < xmax and y > ymin and y < ymax:
+            if self.app.gui.focused and x > xmin and x < xmax and y > ymin and y < ymax:
                 if self.app.debug:
                     print(f"DEBUG: Mouse scrolled at: ({dx}, {dy})")
                 self.app.send("MOUSE", "SCROLL", dy)
