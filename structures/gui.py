@@ -71,8 +71,8 @@ class GUI:
 		self.file_transfer_button = tk.Button(self.tools_frame, text="File Transfer", command=self.app.file_handler.choose_file)
 		self.file_transfer_button.pack(side='left', padx=10)
 
-		self.chat_button = tk.Button(self.tools_frame, text="Chat")
-		self.chat_button.pack(side='left', padx=10)
+		# self.chat_button = tk.Button(self.tools_frame, text="Chat")
+		# self.chat_button.pack(side='left', padx=10)
 
 		self.original_image = Image.open("city.jpg")
 

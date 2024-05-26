@@ -8,7 +8,9 @@ class FileHandler:
 
 	def choose_file(self):
 		self.app.send("HANDLER", "file_dialog_open")
+		sleep(0.5)
 		filename = filedialog.askopenfilename(title="Select file to transfer")
+		sleep(0.5)
 		self.app.send("HANDLER", "file_dialog_close")
 
 		if filename:

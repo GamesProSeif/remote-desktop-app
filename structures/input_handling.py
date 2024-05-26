@@ -33,6 +33,7 @@ class InputHandling:
                         button_name = 'Middle'
                     else:
                         button_name = 'Unknown'
+                        return
 
                     if self.app.debug:
                         print("DEBUG: Mouse Click", button_name)

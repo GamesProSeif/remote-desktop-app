@@ -22,7 +22,7 @@ class TCPProtocol(Protocol):
             print("DEBUG: NEW_CONNECTION -", "SCREEN" if self.is_screen_share else "MAIN")
 
     def dataReceived(self, data: bytes):
-        print("rec-size:", len(data))
+        # print("rec-size:", len(data))
         # print("HEAD:", data[:40])
         try:
             # if data.decode() == self.app.pass_code:
@@ -34,11 +34,11 @@ class TCPProtocol(Protocol):
                 raise Exception()
         except Exception:
             try:
-                print("PREVHEAD:", self.buffer["MAIN"].getvalue()[:40])
+                # print("PREVHEAD:", self.buffer["MAIN"].getvalue()[:40])
                 self.buffer["MAIN"].seek(len(self.buffer["MAIN"].getvalue()))
                 self.buffer["MAIN"].write(data)
                 while True:
-                    print("HEAD:", self.buffer["MAIN"].getvalue()[:40])
+                    # print("HEAD:", self.buffer["MAIN"].getvalue()[:40])
                     start_index = self.buffer["MAIN"].getvalue().find(b"##HEAD")
                     end_index = self.buffer["MAIN"].getvalue().find(b"##FRAMEEND##")
                     if end_index == -1:
@@ -53,7 +53,7 @@ class TCPProtocol(Protocol):
                     # print("rec:" ,len(self.buffer[event_name].getvalue()), delimiter_index)
 
                     self.buffer["MAIN"] = BytesIO(self.buffer["MAIN"].getvalue()[end_index + len(b"##FRAMEEND##"):])
-                    print("NEXT_HEAD:", self.buffer["MAIN"].getvalue()[:40])
+                    # print("NEXT_HEAD:", self.buffer["MAIN"].getvalue()[:40])
 
                     self.buffer[event_name].write(encoded_data)
 
@@ -93,9 +93,9 @@ class TCPProtocol(Protocol):
                 #     self.buffer[event_name] = BytesIO(self.buffer[event_name].getvalue()[delimiter_index + len(b"##FRAMEEND##"):])
             except Exception as exception:
                 if self.is_screen_share:
-                    self.buffer["SCREEN"] = BytesIO(self.buffer["SCREEN"].getvalue()[delimiter_index + len(b"##FRAMEEND##"):])
-                    # self.buffer.seek(0)
-                    # self.buffer.truncate()
+                    # self.buffer["SCREEN"] = BytesIO(self.buffer["SCREEN"].getvalue()[delimiter_index + len(b"##FRAMEEND##"):])
+                    self.buffer.seek(0)
+                    self.buffer.truncate()
                 else:
                     raise exception
 
